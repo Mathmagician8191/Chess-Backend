@@ -23,8 +23,8 @@ public class Game {
   public String promotionOptions;
   
   public Game(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
-      int kingRookColumn, String promotionOptions) {
-    this.position = new Board(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn);
+      int kingRookColumn, String promotionOptions, boolean friendlyFire) {
+    this.position = new Board(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn,friendlyFire);
     this.checkResult();
     this.pastPositions = new ArrayList<>();
     this.pastPositions.add(new Board(this.position));

@@ -1,7 +1,6 @@
 package io.github.mathmagician8191.chessgame;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 
 public class Engine extends Game {
@@ -20,8 +19,8 @@ public class Engine extends Game {
   public boolean side;
   
   public Engine(String fen,int pawnRow,int pawnSquares,int queenRookColumn,int kingRookColumn,
-      String promotionOptions,int depth,int quiescenceDepth,boolean side) {
-    super(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn,promotionOptions);
+      String promotionOptions,boolean friendlyFire,int depth,int quiescenceDepth,boolean side) {
+    super(fen,pawnRow,pawnSquares,queenRookColumn,kingRookColumn,promotionOptions,friendlyFire);
     this.depth = depth;
     this.quiescenceDepth = quiescenceDepth;
     this.side = side;
@@ -78,6 +77,10 @@ public class Engine extends Game {
     Engine newPosition = null;
     
     ArrayList<Engine> games = game.getMoves();
+    
+    if (games.size() == 1) {
+      return games.get(0);
+    }
     
     //randomly orders the list to make it randomly decide between equal moves
     Collections.shuffle(games);
@@ -258,6 +261,10 @@ public class Engine extends Game {
     int whitePieces = 0;
     int blackPieces = 0;
     
+    //see if mating material is guaranteed (i.e. major piece)
+    //KPvK could be a draw and stuff like KNNvK is drawn
+    boolean majorPiece = false;
+    
     //iterate over squares
     for (int i=0;i<board.width;i++) {
       for (int j=0;j<board.height;j++) {
@@ -271,7 +278,8 @@ public class Engine extends Game {
           }
           //values dependent on the piece
           int pieceValue;
-          int kingThreat;
+          int kingThreat = 0;
+          int threatRange = 3;
           int roomNeeded;
           int roomValue;
           int advanceBonus;
@@ -282,45 +290,53 @@ public class Engine extends Game {
           switch (piece.letter) {
             case 'm':
               pieceValue = 1200 + this.rookBonus;
-              kingThreat = 120;
+              kingThreat = 40;
               roomNeeded = 2;
               roomValue = 25;
-              advanceBonus = 1;
+              advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'q':
               pieceValue = 870 + this.rookBonus;
-              kingThreat = 90;
+              kingThreat = 10;
+              threatRange = 5;
               roomNeeded = 1;
-              roomValue = 10;
+              roomValue = 20;
               advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'c':
               pieceValue = 870 + this.rookBonus;
-              kingThreat = 90;
+              kingThreat = 20;
               roomNeeded = 2;
               roomValue = 20;
-              advanceBonus = 1;
+              advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'a':
               pieceValue = 800 + this.bishopBonus;
-              kingThreat = 90;
+              kingThreat = 20;
               roomNeeded = 2;
               roomValue = 20;
-              advanceBonus = 1;
+              advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'h':
               pieceValue = 600;
-              kingThreat = 70;
+              kingThreat = 30;
               roomNeeded = 2;
               roomValue = 20;
-              advanceBonus = 2;
+              advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'r':
               pieceValue = 470 + this.rookBonus;
-              kingThreat = 45;
+              kingThreat = 10;
+              threatRange = 2;
               roomNeeded = 1;
               roomValue = 5;
               advanceBonus = 0;
+              majorPiece = true;
               
               //bonus for rook on the 2nd last rank
 //              if (advancement==board.height-2) {
@@ -330,80 +346,71 @@ public class Engine extends Game {
             case 'i':
               //use the bishop bonus becuase it moves diagonally-ish
               pieceValue = 470 + this.bishopBonus;
-              kingThreat = 40;
               roomNeeded = 2;
               roomValue = 9;
-              advanceBonus = 1;
+              advanceBonus = 0;
               break;
             case 'b':
               pieceValue = 300 + this.bishopBonus;
-              kingThreat = 30;
               roomNeeded = 1;
               roomValue = 10;
               advanceBonus = 0;
               break;
             case 'z':
               pieceValue = 320;
-              kingThreat= 25;
               roomNeeded = 3;
               roomValue = 13;
-              advanceBonus = 2;
+              advanceBonus = 0;
               break;
             case 'n':
               pieceValue = 320;
-              kingThreat = 35;
               roomNeeded = 2;
               roomValue = 18;
-              advanceBonus = 0;
+              advanceBonus = 2;
               break;
             case 'x':
               pieceValue = 320;
-              kingThreat = 35;
+              kingThreat = 10;
               roomNeeded = 1;
               roomValue = 25;
-              advanceBonus = 3;
+              advanceBonus = 0;
+              majorPiece = true;
               break;
             case 'w':
               pieceValue = 200;
-              kingThreat = 25;
               roomNeeded = 1;
               roomValue = 25;
-              advanceBonus = 2;
+              advanceBonus = 0;
               break;
             case 'l':
               pieceValue = 200;
-              kingThreat = 15;
               roomNeeded = 3;
               roomValue = 12;
-              advanceBonus = 2;
+              advanceBonus = 0;
               break;
             case 'f':
               pieceValue = 150;
-              kingThreat = 15;
               roomNeeded = 1;
               roomValue = 25;
-              advanceBonus = 2;
+              advanceBonus = 0;
               break;
             case 'o':
               pieceValue = 150;
-              kingThreat = 0;
               roomNeeded = 0;
               roomValue = 0;
               advanceBonus = 0;
               break;
             case 'p':
-              pieceValue = 100;
-              kingThreat = 15;
+              pieceValue = 80;
+              kingThreat = -5;
               roomNeeded = 1;
-              roomValue = 20;
-              advanceBonus = 10;
+              roomValue = 15;
+              advanceBonus = 12;
               break;
             case 'k':
               pieceValue = 0;
-              kingThreat = 0;
               roomNeeded = 1;
               roomValue = 5;
-              //the king does not want to approach the enemy side
               advanceBonus = 0;
               break;
             default:
@@ -431,7 +438,7 @@ public class Engine extends Game {
           }
           int kingDistance = kingX + kingY;
           //being close to the enemy king threatens it
-          int kingDanger = kingDistance < 4 ? 4 - kingDistance : 0;
+          int kingDanger = kingDistance < threatRange ? threatRange - kingDistance : 0;
           
           //distance to nearest edge
           int distanceX = Math.min(i,board.width-1-i);
@@ -461,10 +468,17 @@ public class Engine extends Game {
       //bonus for kings being close
       int kingCloseness = Math.abs(board.whiteKingLocation[0]-board.blackKingLocation[0])
           + Math.abs(board.whiteKingLocation[1]-board.blackKingLocation[1]);
-      int kingDistance = board.height+board.width-kingCloseness;
+      int size = board.height + board.width;
+      size -= size/2;
+      int kingDistance = size-kingCloseness;
       //bonus for king distance
       //means winning side keeps kings together and likes simplifying to a lone enemy king
-      result -= kingDistance * 50;
+      result -= kingDistance * 25;
+      
+      //we can mate, definitely want to reach this position
+      if (majorPiece) {
+        result -= 10000;
+      }
     }
     if (blackPieces==1) {
       //bonus for white driving the king to the corner
@@ -477,11 +491,22 @@ public class Engine extends Game {
       //bonus for kings being close
       int kingCloseness = Math.abs(board.whiteKingLocation[0]-board.blackKingLocation[0])
           + Math.abs(board.whiteKingLocation[1]-board.blackKingLocation[1]);
-      int kingDistance = board.height+board.width-kingCloseness;
+      int size = board.height + board.width;
+      size -= size/2;
+      int kingDistance = size-kingCloseness;
       //bonus for king distance
       //means winning side keeps kings together and likes simplifying to a lone enemy king
-      result += kingDistance * 50;
+      result += kingDistance * 25;
+      
+      //we can mate, definitely want to reach this position
+      if (majorPiece) {
+        result += 10000;
+      }
     }
+    
+//    if (this.duplicatedPositions.size() > 0) {
+//      result /= (this.duplicatedPositions.size()+1);
+//    }
     
     return result * (board.toMove ? 1 : -1);
   }

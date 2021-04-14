@@ -31,6 +31,7 @@ public class Board {
   int pawnSquares; //number of squares the pawns can move on their first move
   int queenRookColumn;
   int kingRookColumn;
+  boolean friendlyFire;
   
   //promotion info
   public boolean promotionAvailable;
@@ -41,12 +42,13 @@ public class Board {
   public int[] blackKingLocation;
   
   public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
-      int kingRookColumn) {
+      int kingRookColumn,boolean friendlyFire) {
     this.gameOver = false;
     this.promotionAvailable = false;
     this.promotionSquare = new int[] {-1,-1};
     this.pawnRow = pawnRow;
     this.pawnSquares = pawnSquares;
+    this.friendlyFire = friendlyFire;
     
     //subtract 1 to 0-index rather than 1-index
     this.queenRookColumn = queenRookColumn-1;
@@ -182,6 +184,7 @@ public class Board {
     this.pawnSquares = original.pawnSquares;
     this.kingRookColumn = original.kingRookColumn;
     this.queenRookColumn = original.queenRookColumn;
+    this.friendlyFire = original.friendlyFire;
     
     this.promotionAvailable = original.promotionAvailable;
     
@@ -409,6 +412,10 @@ public class Board {
       return false;
     }
     
+    if (Arrays.equals(startSquare,endSquare)) {
+      return false;
+    }
+    
     Piece piece = this.getSquare(startSquare[0],startSquare[1]);
     Piece capture = this.boardstate[endSquare[0]][endSquare[1]];
 
@@ -419,7 +426,9 @@ public class Board {
 
     //test if trying to capture own piece
     if (capture.side == piece.side) {
-      return false;
+      if (!friendlyFire || capture.letter == 'k') {
+        return false;
+      }
     }
     
     boolean result = this.validSquare(startSquare,endSquare,piece.letter,piece.side,
