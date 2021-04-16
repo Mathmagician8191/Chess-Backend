@@ -524,10 +524,9 @@ public class Engine extends Game {
     for (int i=0;i<board.width;i++) {
       for (int j=0;j<board.height;j++) {
         Piece piece = board.boardstate[i][j];
-        if (piece.isPiece && piece.side == (board.toMove ? 1 : -1)) {
+        if (piece.isPiece && (piece.side == (board.toMove ? 1 : -1))) {
           for (int k=0;k<board.width;k++) {
             for (int l=0;l<board.height;l++) {
-              //how is this slower?
               Board newBoard = this.position.getMove(new int[]{i,j},new int[]{k,l});
               if (newBoard != null) {
                 Engine newGame = new Engine(this);

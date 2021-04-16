@@ -41,6 +41,10 @@ public class Board {
   public int[] whiteKingLocation;
   public int[] blackKingLocation;
   
+  //last move
+  public int[] startSquare;
+  public int[] endSquare;
+  
   public Board(String fen,int pawnRow,int pawnSquares,int queenRookColumn,
       int kingRookColumn,boolean friendlyFire) {
     this.gameOver = false;
@@ -188,6 +192,10 @@ public class Board {
     
     this.promotionAvailable = original.promotionAvailable;
     
+    //shallow copies of last move
+    this.startSquare = original.startSquare;
+    this.endSquare = original.endSquare;
+    
     //deep copies of variables that pass by reference
     this.castleRights = new boolean[] {
       original.castleRights[0],
@@ -214,9 +222,7 @@ public class Board {
     };
     this.boardstate = new Piece[this.width][this.height];
     for (int i=0;i<this.width;i++) {
-      for (int j=0;j<this.height;j++) {
-        this.boardstate[i][j] = original.boardstate[i][j];
-      }
+      System.arraycopy(original.boardstate[i],0,this.boardstate[i],0,this.height);
     }
   }
   
@@ -265,7 +271,8 @@ public class Board {
     return Arrays.deepEquals(this.boardstate, other.boardstate);
   }
   
-  public String toFen() {
+  @Override
+  public String toString() {
     String result = "";
     //piece arrangement
     int row = this.height-1;
@@ -357,6 +364,10 @@ public class Board {
       return null;
     }
     
+    if (Arrays.equals(startSquare,endSquare)) {
+      return null;
+    }
+    
     Piece piece = this.getSquare(startSquare[0],startSquare[1]);
     Piece capture = this.boardstate[endSquare[0]][endSquare[1]];
 
@@ -367,7 +378,9 @@ public class Board {
 
     //test if trying to capture own piece
     if (capture.side == piece.side) {
-      return null;
+      if (!friendlyFire || capture.letter == 'k') {
+        return null;
+      }
     }
     
     boolean result = this.validSquare(startSquare,endSquare,piece.letter,piece.side,
@@ -890,6 +903,8 @@ public class Board {
 
   public void movePiece(int[] startSquare,int[] endSquare) {
     this.halfmoveClock++;
+    this.startSquare = startSquare;
+    this.endSquare = endSquare;
     
     //change side to move
     this.toMove = !this.toMove;

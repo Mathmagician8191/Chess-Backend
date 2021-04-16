@@ -52,7 +52,7 @@ public class Game {
   
   @Override
   public String toString() {
-    return this.position.toFen();
+    return this.position.toString();
   }
   
   public void makeMove(int[] startSquare,int[] endSquare) {
